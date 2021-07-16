@@ -1,13 +1,21 @@
-import Phaser from 'phaser';
-import Ball from './ball'
+import Phaser, {Types} from 'phaser';
+
+const BALL = 'ball'
+const PADDLE = 'paddle'
 
 class MyGame extends Phaser.Scene {
-  ball: Ball
+  // ball: Ball
+  ball: Phaser.Physics.Arcade.Sprite
+  paddle: Phaser.Physics.Arcade.Sprite
+  playing: boolean = false
+  startButton: Phaser.GameObjects.Text
+  cursor: Phaser.Types.Input.Keyboard.CursorKeys
 
-  // constructor() {
-  //
-  //   // this.ball = new Ball(this)
-  // }
+  constructor() {
+    super('game-scene')
+    this.ball = undefined
+    this.paddle = undefined
+  }
 
   get sceneCenterX() {
     return this.cameras.main.centerX
@@ -27,23 +35,95 @@ class MyGame extends Phaser.Scene {
 
 
   preload() {
-    this.load.image('ball', require('./assets/img/ball.png'));
-    console.log(this)
+    this.load.image(BALL, require('./assets/img/ball.png'));
+    this.load.image(PADDLE, require('./assets/img/paddle.png'));
+    this.load.spritesheet('button', 'img/button.png', {frameWidth: 120, frameHeight: 40});
   }
 
   create() {
-    this.ball = this.add.sprite(this.sceneCenterX, this.sceneHeight - 25, 'ball');
+    this.ball = this.createBall()
+    this.paddle = this.createPaddle()
+
+    this.physics.add.collider(this.ball, this.paddle)
+
+    this.cursor = this.input.keyboard.createCursorKeys()
+
+    this.startButton = this.add.text(this.sceneCenterX, this.sceneCenterY, 'Start')
+      .setOrigin(0.5)
+      .setPadding(10)
+      .setStyle({backgroundColor: '#111'})
+      .setInteractive({useHandCursor: true})
+      .on('pointerdown', () => this.startGame())
+      .on('pointerover', function () {
+        this.setStyle({fill: '#f39c12'})
+      })
+      .on('pointerout', function () {
+        this.setStyle({fill: '#FFF'})
+      })
+  }
+
+  update(time: number, delta: number) {
+    super.update(time, delta);
+
+    this.listenUserKeyboard()
+  }
+
+  listenUserKeyboard() {
+    if (this.cursor.left.isDown) {
+      this.paddle.setVelocityX(-200)
+    } else if (this.cursor.right.isDown) {
+      this.paddle.setVelocityX(200)
+    } else {
+      this.paddle.setVelocity(0)
+    }
+  }
+
+  createBall() {
+    const ball = this.physics.add.sprite(this.sceneCenterX, this.sceneHeight - 25, BALL);
+    ball.setCollideWorldBounds(true)
+    ball.setBounce(1)
+
+    return ball
+  }
+
+  createPaddle() {
+    const paddle = this.physics.add.sprite(this.sceneCenterX, this.sceneHeight, PADDLE).setOrigin(0.5, 1)
+    paddle.setCollideWorldBounds(true)
+    paddle.setBounce(1)
+    paddle.setImmovable(true)
+    return paddle
+  }
+
+  startGame() {
+    this.startButton.destroy()
+    this.ball.setVelocity(150, -150);
+    this.playing = true
   }
 
 }
 
-const config = {
+const config: Types.Core.GameConfig = {
+  title: 'Arkanoid',
   type: Phaser.AUTO,
-  parent: 'arkanoid',
+  parent: 'game',
+  physics: {
+    default: 'arcade',
+    arcade: {
+      debug: false,
+    },
+  },
   width: 800,
   height: 600,
   scene: MyGame,
-  backgroundColor: "#e2e6ec"
+  backgroundColor: "#e2e6ec",
+  render: {
+    antialiasGL: false,
+    pixelArt: true,
+  },
+  autoFocus: true,
+  audio: {
+    disableWebAudio: false,
+  },
 };
 
 const game = new Phaser.Game(config);
