@@ -47,7 +47,7 @@ class MyGame extends Phaser.Scene {
 
     this.physics.add.collider(this.ball, this.paddle)
 
-    this.physics.world.on('worldbounds', this.onBallCollideWorld)
+    this.physics.world.on('worldbounds', this.onWorldBounds)
 
     this.cursor = this.input.keyboard.createCursorKeys()
 
@@ -72,6 +72,10 @@ class MyGame extends Phaser.Scene {
   }
 
   listenUserKeyboard() {
+    if (!this.playing) {
+      return
+    }
+
     if (this.cursor.left.isDown) {
       this.paddle.setVelocityX(-PADDLE_VELOCITY)
     } else if (this.cursor.right.isDown) {
@@ -81,12 +85,16 @@ class MyGame extends Phaser.Scene {
     }
   }
 
-  onBallCollideWorld(body: any, up: any, down: any, left: any, right: any) {
+  onWorldBounds(body: any, up: any, down: any, left: any, right: any) {
+    const objectKey = body.gameObject.texture.key
     console.log({
-      body, up, down, left, right
+      body, up, down, left, right, gameObject: body.gameObject
     })
-    if (down) {
-      console.log("GAME OVER")
+
+    if (objectKey === BALL) {
+      if (down) {
+        console.log("GAME OVER")
+      }
     }
   }
 
