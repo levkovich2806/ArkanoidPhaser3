@@ -3,6 +3,9 @@ import Phaser, {Types} from 'phaser';
 const BALL = 'ball'
 const PADDLE = 'paddle'
 
+const BALL_VELOCITY = 350
+const PADDLE_VELOCITY = 400
+
 class MyGame extends Phaser.Scene {
   // ball: Ball
   ball: Phaser.Physics.Arcade.Sprite
@@ -33,11 +36,9 @@ class MyGame extends Phaser.Scene {
     return this.cameras.main.height
   }
 
-
   preload() {
     this.load.image(BALL, require('./assets/img/ball.png'));
     this.load.image(PADDLE, require('./assets/img/paddle.png'));
-    this.load.spritesheet('button', 'img/button.png', {frameWidth: 120, frameHeight: 40});
   }
 
   create() {
@@ -45,6 +46,8 @@ class MyGame extends Phaser.Scene {
     this.paddle = this.createPaddle()
 
     this.physics.add.collider(this.ball, this.paddle)
+
+    this.physics.world.on('worldbounds', this.onBallCollideWorld)
 
     this.cursor = this.input.keyboard.createCursorKeys()
 
@@ -70,17 +73,26 @@ class MyGame extends Phaser.Scene {
 
   listenUserKeyboard() {
     if (this.cursor.left.isDown) {
-      this.paddle.setVelocityX(-200)
+      this.paddle.setVelocityX(-PADDLE_VELOCITY)
     } else if (this.cursor.right.isDown) {
-      this.paddle.setVelocityX(200)
+      this.paddle.setVelocityX(PADDLE_VELOCITY)
     } else {
       this.paddle.setVelocity(0)
     }
   }
 
+  onBallCollideWorld(body: any, up: any, down: any, left: any, right: any) {
+    console.log({
+      body, up, down, left, right
+    })
+    if (down) {
+      console.log("GAME OVER")
+    }
+  }
+
   createBall() {
     const ball = this.physics.add.sprite(this.sceneCenterX, this.sceneHeight - 25, BALL);
-    ball.setCollideWorldBounds(true)
+    ball.body.setCollideWorldBounds(true, undefined, undefined, true)
     ball.setBounce(1)
 
     return ball
@@ -96,7 +108,7 @@ class MyGame extends Phaser.Scene {
 
   startGame() {
     this.startButton.destroy()
-    this.ball.setVelocity(150, -150);
+    this.ball.setVelocity(BALL_VELOCITY, -BALL_VELOCITY);
     this.playing = true
   }
 
